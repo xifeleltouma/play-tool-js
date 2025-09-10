@@ -5,8 +5,21 @@ on:
     branches: [ main ]
 
 jobs:
-  build-test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Hello CI"
+      - run: echo "linting..."
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "testing..."
+
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - run: echo "All required jobs passed."
