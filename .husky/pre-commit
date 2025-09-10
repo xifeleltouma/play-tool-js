@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$branch" = "main" ]; then
+  echo "❌ Direct commits on 'main' are blocked. Create a branch and commit there."
+  exit 1
+fi
