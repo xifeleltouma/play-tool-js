@@ -1,17 +1,17 @@
 {
-  // Format on save
   "editor.formatOnSave": true,
 
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
 
   "eslint.validate": ["javascript"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
 
-  "[javascript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-  },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -23,5 +23,8 @@
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+
+  // Ensure Prettier only runs when it finds your config
+  "prettier.requireConfig": true
 }
