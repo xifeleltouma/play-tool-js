@@ -2,11 +2,11 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint:
-    name: eslint
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,8 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-
-
+      - run: npm run format
 
   test:
     name: test
