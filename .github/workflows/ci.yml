@@ -36,7 +36,11 @@ jobs:
     needs: [lint, test]
     if: always()
     steps:
-      - name: Fail if dependencies failed
-        if: ${{ needs.lint.result != 'success' || needs.test.result != 'success' }}
-        run: exit 1
-      - run: echo "All required jobs passed."
+      - name: Fail if any dependency failed
+        run: |
+          echo "results=${{ join(needs.*.result, ',') }}"
+          if echo "${{ join(needs.*.result, ',') }}" | grep -E '(failure|cancelled|skipped)'; then
+            echo "Some required jobs did not succeed."
+            exit 1
+          fi
+          echo "All required jobs passed."
