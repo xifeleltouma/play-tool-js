@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rhysd/actionlint@v1 # lints .github/workflows/*.yml for syntax + expressions
+      - uses: raven-actions/actionlint@v2 # lints .github/workflows/*.yml for syntax + expressions
 
   gate:
     name: gate
