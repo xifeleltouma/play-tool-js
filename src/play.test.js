@@ -47,29 +47,39 @@ describe('success', () => {
       const result = await run({})
       expect(result).toBe(2)
     })
+    it('keeps previous ctx if a non-last action returns undefined', async () => {
+      const run = play(
+        async () => ({ a: 1 }), // ctx = { a:1 }
+        async () => undefined, // skipped, ctx stays { a:1 }
+        async (ctx) => ctx.a, // last → should still see 1
+      )
+
+      const result = await run({})
+      expect(result).toBe(1)
+    })
+
+    it('skips multiple actions returning undefined and preserves ctx', async () => {
+      const run = play(
+        async () => ({ a: 1 }), // ctx = { a:1 }
+        async () => undefined, // skipped
+        async () => undefined, // skipped
+        async (ctx) => ctx.a, // last → should still see 1
+      )
+
+      const result = await run({})
+      expect(result).toBe(1)
+    })
   })
 
-  it('keeps previous ctx if a non-last action returns undefined', async () => {
+  it('runs actions in order via ctx chaining', async () => {
     const run = play(
-      async () => ({ a: 1 }), // ctx = { a:1 }
-      async () => undefined, // skipped, ctx stays { a:1 }
-      async (ctx) => ctx.a, // last → should still see 1
+      async () => ({ seq: 'a' }),
+      async (ctx) => ({ seq: ctx.seq + 'b' }),
+      async (ctx) => ctx.seq + 'c', // last may return non-object
     )
 
     const result = await run({})
-    expect(result).toBe(1)
-  })
-
-  it('skips multiple actions returning undefined and preserves ctx', async () => {
-    const run = play(
-      async () => ({ a: 1 }), // ctx = { a:1 }
-      async () => undefined, // skipped
-      async () => undefined, // skipped
-      async (ctx) => ctx.a, // last → should still see 1
-    )
-
-    const result = await run({})
-    expect(result).toBe(1)
+    expect(result).toBe('abc')
   })
 })
 
@@ -77,6 +87,47 @@ describe('failure', () => {
   describe('actions', () => {
     it('throws if no actions are provided', async () => {
       await expect(play()({})).rejects.toThrow('requires at least one action')
+    })
+  })
+
+  describe('error handling', () => {
+    it('stops on middle error; last is not executed', async () => {
+      const run = play(
+        async () => ({ step: 1 }),
+        async () => {
+          throw new Error('boom-middle')
+        },
+        // if this ran, the error message would change
+        async () => {
+          throw new Error('should-not-run')
+        },
+      )
+
+      await expect(run({})).rejects.toThrow('boom-middle')
+    })
+
+    it('bubbles error from the first action', async () => {
+      const run = play(
+        async () => {
+          throw new Error('boom-first')
+        },
+        async () => ({ ok: true }),
+        async () => 'done',
+      )
+
+      await expect(run({})).rejects.toThrow('boom-first')
+    })
+
+    it('bubbles error from the last action', async () => {
+      const run = play(
+        async () => ({ step: 1 }),
+        async (ctx) => ({ step: ctx.step + 1 }),
+        async () => {
+          throw new Error('boom-last')
+        },
+      )
+
+      await expect(run({})).rejects.toThrow('boom-last')
     })
   })
 
