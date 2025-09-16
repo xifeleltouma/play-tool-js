@@ -146,6 +146,31 @@ describe('failure', () => {
       const run = play(async () => ({}))
       await expect(run([])).rejects.toThrow('Input must be a plain object')
     })
+
+    class FakeModel {
+      constructor(id) {
+        this.id = id
+      }
+      save() {
+        this.id++
+      }
+    }
+
+    it('throws when input is a class instance', async () => {
+      const run = play(async () => ({}))
+      await expect(run(new FakeModel(1))).rejects.toThrow(
+        'Input must be a plain object',
+      )
+    })
+
+    it('throws when a non-last action returns a class instance', async () => {
+      const run = play(
+        async () => ({ a: 1 }),
+        async () => new FakeModel(1), // non-plain → should be rejected
+        async () => 'done',
+      )
+      await expect(run({})).rejects.toThrow('must return a plain object')
+    })
   })
 
   describe('non-last action', () => {

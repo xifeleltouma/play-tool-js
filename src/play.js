@@ -1,5 +1,9 @@
-const isPlainObject = (obj) =>
-  obj !== null && typeof obj === 'object' && !Array.isArray(obj)
+export const isPlainObject = (v) =>
+  v !== null &&
+  typeof v === 'object' &&
+  !Array.isArray(v) &&
+  (Object.getPrototypeOf(v) === Object.prototype ||
+    Object.getPrototypeOf(v) === null)
 
 export const play =
   (...actions) =>
