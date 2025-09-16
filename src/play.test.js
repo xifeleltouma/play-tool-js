@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { play } from './index'
+import { play } from './play'
 
 describe('success', () => {
   it('returns an object', async () => {
