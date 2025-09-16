@@ -5,6 +5,20 @@ export const isPlainObject = (v) =>
   (Object.getPrototypeOf(v) === Object.prototype ||
     Object.getPrototypeOf(v) === null)
 
+// Normalizes any thrown value into an Error.
+// - Preserves stack when it's already an Error.
+// - Stringifies plain objects safely.
+export const toError = (err) => {
+  if (err instanceof Error) return err
+  try {
+    if (typeof err === 'string') return new Error(err)
+    // JSON stringify may fail on circulars; fallback to String(err)
+    return new Error(JSON.stringify(err))
+  } catch {
+    return new Error(String(err))
+  }
+}
+
 export const play =
   (...actions) =>
   async (input = {}) => {
@@ -29,7 +43,16 @@ export const play =
     let ctx = { ...input }
 
     for (const [index, action] of actions.entries()) {
-      const result = await action(ctx)
+      let result
+      try {
+        result = await action(ctx)
+      } catch (err) {
+        const label = action.name
+        const e = toError(err)
+        // Keep original stack if it was an Error; just prefix the message
+        e.message = `Action at index ${index}${label ? ` "${label}"` : ''} failed: ${e.message}`
+        throw e
+      }
 
       const isLast = index + 1 === actions.length
 

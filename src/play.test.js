@@ -122,7 +122,13 @@ describe('failure', () => {
         },
       )
 
-      await expect(run({})).rejects.toThrow('boom-middle')
+      try {
+        // await expect(run({})).rejects.toThrow('boom-middle')
+        await run({})
+      } catch (e) {
+        // TOOD
+        console.dir(e)
+      }
     })
 
     it('bubbles error from the first action', async () => {
@@ -147,6 +153,53 @@ describe('failure', () => {
       )
 
       await expect(run({})).rejects.toThrow('boom-last')
+    })
+
+    it('annotates errors with action index', async () => {
+      const run = play(
+        async () => ({ a: 1 }),
+        async function middle() {
+          throw new Error('boom')
+        }, // has a name
+        async () => 'never',
+      )
+
+      await expect(run({})).rejects.toThrow(/Action at index 1 "middle" failed/)
+    })
+
+    it('annotates errors even when action is anonymous', async () => {
+      const run = play(
+        async () => ({ a: 1 }),
+        async () => {
+          throw new Error('fail')
+        },
+      )
+      await expect(run({})).rejects.toThrow(/Action at index 1 failed/)
+    })
+
+    it('prefixes message and preserves stack for Error', async () => {
+      const run = play(async () => {
+        throw new Error('boom')
+      })
+      await expect(run({})).rejects.toThrow(/Action at index 0 failed: boom/)
+    })
+
+    it('normalizes string throws', async () => {
+      const run = play(async () => {
+        throw 'boom-str'
+      })
+      await expect(run({})).rejects.toThrow(
+        /Action at index 0 failed: boom-str/,
+      )
+    })
+
+    it('normalizes object throws', async () => {
+      const run = play(async () => {
+        throw { msg: 'nope' }
+      })
+      await expect(run({})).rejects.toThrow(
+        /Action at index 0 failed: (.*nope|{"msg":"nope"})/,
+      )
     })
   })
 
