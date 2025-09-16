@@ -8,14 +8,7 @@
     ["@semantic-release/npm", { "npmPublish": true }],
     [
       "@semantic-release/github",
-      { "successComment": false, "failComment": false }
-    ],
-    [
-      "@semantic-release/git",
-      {
-        "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
-        "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
-      }
+      { "successComment": false, "failCommentCondition": false }
     ]
   ]
 }
