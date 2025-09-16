@@ -81,6 +81,25 @@ describe('success', () => {
     const result = await run({})
     expect(result).toBe('abc')
   })
+
+  describe('play – insulation from external input mutations (top-level, async)', () => {
+    it('keeps the original top-level value even if input is mutated after call', async () => {
+      const input = { a: 1 }
+
+      const run = play(async (ctx) => {
+        // yield to next microtask so the caller can mutate `input` meanwhile
+        await Promise.resolve()
+        return ctx.a
+      })
+
+      const p = run(input)
+      // external mutation after play() was called
+      input.a = 999
+
+      const result = await p
+      expect(result).toBe(1) // requires at least a shallow copy of input
+    })
+  })
 })
 
 describe('failure', () => {

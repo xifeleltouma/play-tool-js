@@ -18,7 +18,15 @@ export const play =
       )
     }
 
-    let ctx = input
+    // Snapshot input once.
+    // NOTE: This is a *shallow* copy: it prevents external top-level mutations
+    // from affecting this run, but nested objects/arrays remain shared references.
+    // FUTURE IMPROVEMENTS (pick one if/when needed):
+    // - Use `structuredClone(input)` (or a deep-copy fallback) to also snapshot nested values.
+    // - Pass a deep read-only Proxy view of `ctx` into actions to prevent in-action mutations.
+    // - Enforce POJOs more strictly (prototype check) so class/model instances are rejected.
+    // - Optionally enable the Proxy only in dev (NODE_ENV !== 'production') to keep prod fast.
+    let ctx = { ...input }
 
     for (const [index, action] of actions.entries()) {
       const result = await action(ctx)
