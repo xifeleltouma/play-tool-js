@@ -1,5 +1,8 @@
 {
-  "name": "play-tool",
+  "name": "@felixfelix/play-tool",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.0-development",
   "description": "",
   "type": "module",
