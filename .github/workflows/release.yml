@@ -52,13 +52,6 @@ jobs:
             package-lock.json
             CHANGELOG.md
 
-      # approve via GitHub CLI (preinstalled)
-      - name: Approve sync PR
-        if: steps.cpr.outputs.pull-request-operation != 'none'
-        run: gh pr review --approve ${{ steps.cpr.outputs.pull-request-number }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       # enable auto-merge; requires repo setting “Allow auto-merge”
       - name: Enable auto-merge for sync PR
         if: steps.cpr.outputs.pull-request-operation != 'none'
