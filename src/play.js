@@ -34,6 +34,4 @@ export const play =
 
       ctx = { ...ctx, ...result }
     }
-
-    return ctx
   }
