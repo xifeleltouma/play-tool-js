@@ -177,11 +177,33 @@ describe('failure', () => {
       await expect(run({})).rejects.toThrow(/Action at index 1 failed/)
     })
 
-    it('prefixes message and preserves stack for Error', async () => {
-      const run = play(async () => {
-        throw new Error('boom')
-      })
-      await expect(run({})).rejects.toThrow(/Action at index 0 failed: boom/)
+    it('prefixes message and keeps original stack for a named action', async () => {
+      const run = play(
+        async () => ({ a: 1 }),
+        async function middle() {
+          throw new Error('boom')
+        },
+        async () => 'never',
+      )
+
+      let err
+      try {
+        await run({})
+      } catch (e) {
+        err = e
+      }
+
+      expect(err).toBeInstanceOf(Error)
+      // Message is prefixed once, with action index + name
+      expect(err.message).toMatch(/Action at index 1 "middle" failed: boom/)
+      // First stack line matches the message
+      expect(err.stack.split('\n')[0]).toMatch(
+        /Action at index 1 "middle" failed: boom/,
+      )
+      // Stack points to the throwing site in the test
+      expect(err.stack).toMatch(/play\.test\.js/i)
+      // No verbose cause chain
+      expect(err).not.toHaveProperty('cause')
     })
 
     it('normalizes string throws', async () => {
