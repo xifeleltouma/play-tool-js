@@ -14,11 +14,24 @@ export const play =
       )
     }
 
-    let current = input
+    let ctx = input
 
-    for (const action of actions) {
-      current = await action(current)
+    for (const [index, action] of actions.entries()) {
+      const result = await action(ctx)
+
+      const isLast = index + 1 === actions.length
+
+      if (isLast) return result
+
+      if (!isPlainObject(result)) {
+        const what = result === null ? 'null' : typeof result
+        throw new TypeError(
+          `Action at index ${index} must return a plain object when it is not the last action (got ${what}).`,
+        )
+      }
+
+      ctx = { ...ctx, ...result }
     }
 
-    return current
+    return ctx
   }

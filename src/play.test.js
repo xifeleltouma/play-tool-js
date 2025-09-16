@@ -3,31 +3,100 @@ import { describe, expect, it } from 'vitest'
 import { play } from './play'
 
 describe('success', () => {
-  it('returns an object', async () => {
-    const input = {}
-    const fn = play(async () => ({}))
-    const result = await play(fn)(input)
+  it('allows the last action to return an object and only returns the result of the last action', async () => {
+    const fn = play(
+      async () => ({ a: 1 }),
+      async () => ({ b: 2 }),
+    )
+    const result = await play(fn)({})
     expect(result).to.toBeTypeOf('object')
+    expect(result.a).to.equal(undefined)
+    expect(result.b).to.equal(2)
+  })
+
+  it('allows the last action to return a non-object (e.g. string)', async () => {
+    const run = play(
+      async () => ({}),
+      async () => 'done',
+    )
+
+    const result = await run({})
+
+    expect(result).toBe('done')
+  })
+
+  describe('context propagation', () => {
+    it('merges result into ctx and passes it to the next action', async () => {
+      const run = play(
+        async () => ({ a: 1 }), // non-last → must return object → merged
+        async (ctx) => ({ b: ctx.a + 1 }), // sees { a:1 } → returns { b:2 } → merged
+        async (ctx) => ctx.b === 2, // last → can return non-object (boolean)
+      )
+
+      const result = await run({})
+      expect(result).toBe(true)
+    })
+
+    it('later action overwrites a field and next action sees the new value', async () => {
+      const run = play(
+        async () => ({ a: 1 }),
+        async () => ({ a: 2 }), // (overwrites)
+        async (ctx) => ctx.a, // last returns 2
+      )
+
+      const result = await run({})
+      expect(result).toBe(2)
+    })
   })
 })
 
 describe('failure', () => {
-  it('throws if no actions are provided', async () => {
-    await expect(play()({})).rejects.toThrow('requires at least one action')
+  describe('actions', () => {
+    it('throws if no actions are provided', async () => {
+      await expect(play()({})).rejects.toThrow('requires at least one action')
+    })
   })
 
-  it('throws if input is null', async () => {
-    const fn = play(async () => ({}))
-    await expect(fn(null)).rejects.toThrow('Input must be a plain object')
+  describe('input', () => {
+    it('throws if input is null', async () => {
+      const fn = play(async () => ({}))
+      await expect(fn(null)).rejects.toThrow('Input must be a plain object')
+    })
+
+    it('throws if input is a primitive', async () => {
+      const run = play(async () => ({}))
+      await expect(run(1)).rejects.toThrow('Input must be a plain object')
+    })
+
+    it('throws if input is an array', async () => {
+      const run = play(async () => ({}))
+      await expect(run([])).rejects.toThrow('Input must be a plain object')
+    })
   })
 
-  it('throws if input is a primitive', async () => {
-    const fn = play(async () => ({}))
-    await expect(fn(1)).rejects.toThrow('Input must be a plain object')
-  })
+  describe('non-last action', () => {
+    it('throws if a non-last action returns null', async () => {
+      const run = play(
+        async () => null,
+        async () => ({}),
+      )
+      await expect(run({})).rejects.toThrow('must return a plain object')
+    })
 
-  it('throws if input is an array', async () => {
-    const fn = play(async () => ({}))
-    await expect(fn([])).rejects.toThrow('Input must be a plain object')
+    it('throws if a non-last action returns a primitive', async () => {
+      const run = play(
+        async () => 123,
+        async () => ({}),
+      )
+      await expect(run({})).rejects.toThrow('must return a plain object')
+    })
+
+    it('throws if a non-last action returns an array', async () => {
+      const run = play(
+        async () => [],
+        async () => ({}),
+      )
+      await expect(run({})).rejects.toThrow('must return a plain object')
+    })
   })
 })
