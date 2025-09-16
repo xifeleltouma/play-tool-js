@@ -48,6 +48,29 @@ describe('success', () => {
       expect(result).toBe(2)
     })
   })
+
+  it('keeps previous ctx if a non-last action returns undefined', async () => {
+    const run = play(
+      async () => ({ a: 1 }), // ctx = { a:1 }
+      async () => undefined, // skipped, ctx stays { a:1 }
+      async (ctx) => ctx.a, // last → should still see 1
+    )
+
+    const result = await run({})
+    expect(result).toBe(1)
+  })
+
+  it('skips multiple actions returning undefined and preserves ctx', async () => {
+    const run = play(
+      async () => ({ a: 1 }), // ctx = { a:1 }
+      async () => undefined, // skipped
+      async () => undefined, // skipped
+      async (ctx) => ctx.a, // last → should still see 1
+    )
+
+    const result = await run({})
+    expect(result).toBe(1)
+  })
 })
 
 describe('failure', () => {

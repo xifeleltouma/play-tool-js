@@ -23,6 +23,8 @@ export const play =
 
       if (isLast) return result
 
+      if (result === undefined) continue
+
       if (!isPlainObject(result)) {
         const what = result === null ? 'null' : typeof result
         throw new TypeError(
