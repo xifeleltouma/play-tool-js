@@ -2,6 +2,8 @@
 
 A tiny async pipeline helper for composing steps that share a context.
 
+👉 [View on npm](https://www.npmjs.com/package/@felixfelix/play-tool)
+
 ### Install
 
 ```bash
@@ -93,6 +95,6 @@ This project is licensed under the **ISC License**.
 
 - See the full text in [`LICENSE`](./LICENSE).
 - SPDX: `ISC`
-- © 2025 Your Name
+- © 2025 xifelxifel
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](./LICENSE)
