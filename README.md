@@ -39,9 +39,51 @@ const checkout = play(loadCart, calculateTotal, processPayment)
 await checkout({ cartId: 'c_123' })
 ```
 
+#### `init` for custom pipelines
+
+`play` is just `init` with defaults:
+
+- stops on `{ stop: true }`
+- strips the `stop` key before returning.
+
+Use `init` when you need your own rules:
+
+```js
+import { init } from 'play-tool'
+
+// Example: stop early on HTTP Response
+const httpPlay = init({
+  stop: (r) => r instanceof Response,
+  toOutput: (r) => r,
+})
+
+const pipeline = httpPlay(
+  async (ctx) =>
+    ctx.user
+      ? { user: ctx.user }
+      : new Response('Unauthorized', { status: 401 }),
+  async (ctx) => new Response(`Hello ${ctx.user.name}`, { status: 200 }),
+)
+
+await pipeline({ user: null }) // -> Response(401)
+```
+
 ### API
 
+### `init(config) -> (...actions) => (input?) => Promise<any>`
+
+The core primitive. Creates a pipeline runner with customizable rules.
+
+- **`config.stop(result)`** → return `true` to stop early.
+- **`config.toOutput(result)`** → map the final result before returning.
+
 #### `play(...actions) -> (input?) => Promise<any>`
+
+A preconfigured `init` with sensible defaults:
+
+- Stops on `{ stop: true }`.
+- Strips the `stop` key before returning.
+- Shallow-merges results into the shared context.
 
 - **Action signature:** `async (ctx, { input }) => result`
   - `ctx`: running context. Starts as a **shallow copy** of `input`, then is shallow-merged with each non-last result.
@@ -67,28 +109,6 @@ await checkout({ cartId: 'c_123' })
 - If an action throws/rejects, its error is rethrown with a short prefix:
   `Action at index N "actionName" failed: <original message>`
 
-  ### Example
-
-```js
-import { play } from 'play-tool'
-
-const stepA = async (ctx, { input }) => {
-  return { a: input.a + 1 } // { a: 2 }
-}
-
-const stepB = async (ctx) => {
-  return { b: ctx.a * 2 } // { a: 2, b: 4 }
-}
-
-const stepC = async (ctx, { input }) => {
-  return ctx.b + input.a // -> 4 + 1 = 5 (last may return non-object)
-}
-
-const pipeline = play(stepA, stepB, stepC)
-
-await pipeline({ a: 1 }) // => 5
-```
-
 ### License
 
 This project is licensed under the **ISC License**.
@@ -98,3 +118,7 @@ This project is licensed under the **ISC License**.
 - © 2025 xifelxifel
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](./LICENSE)
+
+```
+
+```
