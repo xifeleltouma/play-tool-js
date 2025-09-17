@@ -36,43 +36,14 @@ const processPayment = async (ctx) => {
 const checkout = play(loadCart, calculateTotal, processPayment)
 
 // Run the pipeline
-await checkout({ cartId: 'c_123' })
-```
-
-#### `init` for custom pipelines
-
-`play` is just `init` with defaults:
-
-- stops on `{ stop: true }`
-- strips the `stop` key before returning.
-
-Use `init` when you need your own rules:
-
-```js
-import { init } from 'play-tool'
-
-// Example: stop early on HTTP Response
-const httpPlay = init({
-  stop: (r) => r instanceof Response,
-  toOutput: (r) => r,
-})
-
-const pipeline = httpPlay(
-  async (ctx) =>
-    ctx.user
-      ? { user: ctx.user }
-      : new Response('Unauthorized', { status: 401 }),
-  async (ctx) => new Response(`Hello ${ctx.user.name}`, { status: 200 }),
-)
-
-await pipeline({ user: null }) // -> Response(401)
+await checkout({ cartId: 'c_123' }) // { success: true }
 ```
 
 ### API
 
 ### `init(config) -> (...actions) => (input?) => Promise<any>`
 
-The core primitive. Creates a pipeline runner with customizable rules.
+Creates a pipeline runner with customizable rules.
 
 - **`config.stop(result)`** → return `true` to stop early.
 - **`config.toOutput(result)`** → map the final result before returning.
@@ -108,6 +79,35 @@ A preconfigured `init` with sensible defaults:
 - If validation fails (no actions, bad input, non-object from a non-last action), a `TypeError`/`Error` is thrown.
 - If an action throws/rejects, its error is rethrown with a short prefix:
   `Action at index N "actionName" failed: <original message>`
+
+#### `init` for custom pipelines
+
+`play` is just `init` with defaults:
+
+- stops on `{ stop: true }`
+- strips the `stop` key before returning.
+
+Use `init` when you need your own rules:
+
+```js
+import { init } from 'play-tool'
+
+// Example: stop early on HTTP Response
+const httpPlay = init({
+  stop: (r) => r instanceof Response,
+  toOutput: (r) => r,
+})
+
+const pipeline = httpPlay(
+  async (ctx) =>
+    ctx.user
+      ? { user: ctx.user }
+      : new Response('Unauthorized', { status: 401 }),
+  async (ctx) => new Response(`Hello ${ctx.user.name}`, { status: 200 }),
+)
+
+await pipeline({ user: null }) // -> Response(401)
+```
 
 ### License
 
