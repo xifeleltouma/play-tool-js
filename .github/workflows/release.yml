@@ -48,7 +48,7 @@ jobs:
       # Read bumped version from package.json
       - name: Read version
         id: ver
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+        run: echo "version=$(node -p 'require(\"./package.json\").version')" >> $GITHUB_OUTPUT
 
       # Extract the latest changelog section for PR body
       - name: Extract latest changelog section
