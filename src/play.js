@@ -19,9 +19,16 @@ export const toError = (err) => {
   }
 }
 
-export const play =
+export const init =
+  (custom = {}) =>
   (...actions) =>
   async (input = {}) => {
+    const config = {
+      stop: () => false,
+      toOutput: (a) => a,
+      ...custom,
+    }
+
     if (actions.length === 0) {
       throw new Error('play() requires at least one action')
     }
@@ -55,14 +62,11 @@ export const play =
         throw e
       }
 
-      if (result?.stop === true) {
-        delete result.stop
-        return result
-      }
+      if (config.stop(result)) return config.toOutput(result)
 
       const isLast = index + 1 === actions.length
 
-      if (isLast) return result
+      if (isLast) return config.toOutput(result)
 
       if (result === undefined) continue
 
@@ -76,3 +80,11 @@ export const play =
       ctx = { ...ctx, ...result }
     }
   }
+
+export const play = init({
+  stop: (result) => result?.stop === true,
+  toOutput: (result) => {
+    delete result?.stop
+    return result
+  },
+})

@@ -1,1 +1,1 @@
-export { play } from './play.js'
+export { init, play } from './play.js'
