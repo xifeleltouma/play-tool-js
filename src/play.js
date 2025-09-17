@@ -55,6 +55,11 @@ export const play =
         throw e
       }
 
+      if (result?.stop === true) {
+        delete result.stop
+        return result
+      }
+
       const isLast = index + 1 === actions.length
 
       if (isLast) return result

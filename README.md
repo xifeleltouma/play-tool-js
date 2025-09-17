@@ -56,6 +56,8 @@ await checkout({ cartId: 'c_123' })
 - **Non-last actions:** must return a **plain object** or `undefined`.
   - `undefined` → no merge; `ctx` is unchanged for the next action.
 - **Last action:** can return **anything** (object or non-object). This becomes the pipeline result.
+- **Early return:** any action can return an object with `{ stop: true, ... }`  
+  → the pipeline stops immediately, removes the `stop` key, and returns the rest as the final result.
 
 #### Errors
 

@@ -180,6 +180,26 @@ describe('success', () => {
       expect(result).toBe(true)
     })
   })
+
+  describe('early stop', () => {
+    it('stops early and returns payload without the stop marker', async () => {
+      const a = async () => ({ stop: true, data: 42, source: 'cache' })
+      const b = async () => ({ shouldNotRun: true })
+
+      const run = play(a, b)
+      const result = await run({})
+
+      expect(result).toEqual({ data: 42, source: 'cache' })
+    })
+
+    it('removes stop marker even if it is the last action', async () => {
+      const last = async () => ({ stop: true, ok: 1 })
+      const run = play(last)
+
+      const result = await run({})
+      expect(result).toEqual({ ok: 1 })
+    })
+  })
 })
 
 describe('failure', () => {
