@@ -6,8 +6,8 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write # needed for PR creation
-  pull-requests: write # needed for PR creation/merge
+  contents: write
+  pull-requests: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -45,14 +45,18 @@ jobs:
         env:
           HUSKY: 0
 
-      # Read bumped version from package.json
+      # Read bumped version from package.json (quote GITHUB_OUTPUT)
       - name: Read version
         id: ver
-        run: echo "version=$(node -p 'require(\"./package.json\").version')" >> $GITHUB_OUTPUT
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       # Extract the latest changelog section for PR body
       - name: Extract latest changelog section
         id: notes
+        shell: bash
         run: |
           awk 'BEGIN{p=0} /^## /{ if(p) exit; p=1; next } p{print}' CHANGELOG.md > RELEASE_NOTES.md
           {
