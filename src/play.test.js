@@ -100,6 +100,86 @@ describe('success', () => {
       expect(result).toBe(1) // requires at least a shallow copy of input
     })
   })
+
+  describe('input passed to actions as second arg', () => {
+    it('provides the same input snapshot to every action (same reference)', async () => {
+      const original = { a: 1, nested: { n: 1 } }
+      const seen = []
+
+      const run = play(
+        async (ctx, { input }) => {
+          seen.push(input)
+          return { step: 1 }
+        },
+        async (ctx, { input }) => {
+          seen.push(input)
+          return { step: ctx.step + 1 }
+        },
+        async (ctx, { input }) => {
+          seen.push(input)
+          return input
+        }, // return the second-arg input
+      )
+
+      const result = await run(original)
+
+      expect(seen).toHaveLength(3)
+      // same reference for all actions
+      expect(seen[0]).toBe(seen[1])
+      expect(seen[1]).toBe(seen[2])
+      // not the same reference as the original (because you shallow-copied it)
+      expect(seen[0]).not.toBe(original)
+      // initially same values
+      expect(seen[0]).toEqual(original)
+      // last action returned the same input reference it received
+      expect(result).toBe(seen[0])
+    })
+
+    it('top-level external mutation after call does not affect the input snapshot passed to actions', async () => {
+      const original = { a: 1 }
+
+      const run = play(async (ctx, { input }) => {
+        // allow a tick for external mutation
+        await Promise.resolve()
+        return input.a
+      })
+
+      const p = run(original)
+      // mutate the original after scheduling the run
+      original.a = 999
+
+      const result = await p
+      expect(result).toBe(1) // reads from the snapshot, not the mutated original
+    })
+
+    it('ctx evolves via merges while input stays at its original values', async () => {
+      const original = { a: 1 }
+
+      const run = play(
+        async () => ({ a: 2 }), // ctx.a becomes 2
+        async (ctx, { input }) => ctx.a + input.a, // 2 + 1 = 3 (input is original snapshot)
+      )
+
+      const result = await run(original)
+      expect(result).toBe(3)
+    })
+
+    it('actions can rely on the second arg shape: { input }', async () => {
+      const run = play(
+        async (ctx, config) => {
+          // sanity: config has { input }
+          expect(config).toBeTypeOf('object')
+          expect('input' in config).toBe(true)
+          expect(config.input).toBeTypeOf('object')
+          return { ok: true }
+        },
+        async (ctx, { input }) => input.ok ?? ctx.ok ?? false,
+      )
+
+      const result = await run({ ok: true })
+      expect(result).toBe(true)
+    })
+  })
 })
 
 describe('failure', () => {

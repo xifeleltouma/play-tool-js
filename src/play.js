@@ -41,11 +41,12 @@ export const play =
     // - Enforce POJOs more strictly (prototype check) so class/model instances are rejected.
     // - Optionally enable the Proxy only in dev (NODE_ENV !== 'production') to keep prod fast.
     let ctx = { ...input }
+    const intial = { ...input }
 
     for (const [index, action] of actions.entries()) {
       let result
       try {
-        result = await action(ctx)
+        result = await action(ctx, { input: intial })
       } catch (err) {
         const label = action.name
         const e = toError(err)
