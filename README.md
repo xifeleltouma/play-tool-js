@@ -39,7 +39,7 @@ const checkout = play(loadCart, calculateTotal, processPayment)
 await checkout({ cartId: 'c_123' })
 ```
 
-#### `init` for custom pipelines
+### `init` for custom pipelines
 
 `play` is just `init` with defaults:
 
@@ -70,7 +70,7 @@ await pipeline({ user: null }) // -> Response(401)
 
 ### API
 
-### `init(config) -> (...actions) => (input?) => Promise<any>`
+#### `init(config) -> (...actions) => (input?) => Promise<any>`
 
 The core primitive. Creates a pipeline runner with customizable rules.
 
@@ -118,7 +118,3 @@ This project is licensed under the **ISC License**.
 - © 2025 xifelxifel
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](./LICENSE)
-
-```
-
-```
