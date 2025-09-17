@@ -4,7 +4,7 @@
     "access": "public"
   },
   "version": "0.0.0-development",
-  "description": "",
+  "description": "A tiny async pipeline helper for composing steps that share a context.",
   "type": "module",
   "main": "./dist/index.cjs",
   "exports": {
