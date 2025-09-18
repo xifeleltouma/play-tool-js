@@ -8,7 +8,7 @@
     ["@semantic-release/npm", { "npmPublish": true, "pkgRoot": "." }],
     [
       "@semantic-release/github",
-      { "successComment": false, "failCommentCondition": false }
+      { "successCommentCondition": false, "failCommentCondition": false }
     ]
   ]
 }
