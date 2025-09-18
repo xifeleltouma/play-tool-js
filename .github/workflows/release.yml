@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -49,6 +49,13 @@ jobs:
         env:
           HUSKY: 0
 
+      # Sanity: show what changed (useful if PR step no-ops)
+      - name: Debug diff
+        if: steps.sr.outputs.new_release_published == 'true'
+        run: |
+          git status
+          git --no-pager diff --name-only
+
       - name: Build PR body from release notes
         if: steps.sr.outputs.new_release_published == 'true'
         run: |
@@ -65,6 +72,8 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
           branch: chore/sync-release-files
           title: 'chore(release): v${{ steps.sr.outputs.new_release_version }}'
           commit-message: 'chore(release): v${{ steps.sr.outputs.new_release_version }}'
@@ -73,8 +82,16 @@ jobs:
             package.json
             package-lock.json
             CHANGELOG.md
+          pathspec-error-no-match: ignore
+          committer: GitHub <noreply@github.com>
+          author: GitHub Actions <actions@github.com>
+          signoff: true
+          delete-branch: true
+          labels: |
+            chore
+            release
 
-      # Fast-fail: this will fail immediately if PR isn’t mergeable or auto-merge is disallowed
+      # Enable auto-merge on the sync PR (GitHub will merge once checks pass & branch is up to date)
       - name: Enable auto-merge for sync PR
         if: steps.sr.outputs.new_release_published == 'true' && steps.cpr.outputs.pull-request-operation != 'none'
         uses: peter-evans/enable-pull-request-automerge@v3
