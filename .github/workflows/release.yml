@@ -82,7 +82,6 @@ jobs:
             package.json
             package-lock.json
             CHANGELOG.md
-          pathspec-error-no-match: ignore
           committer: GitHub <noreply@github.com>
           author: GitHub Actions <actions@github.com>
           signoff: true
