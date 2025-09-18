@@ -42,12 +42,30 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Only when a NEW release was published
+      # Persist the released version into package.json so the sync PR always has a diff
+      - name: Sync package.json version to released version
+        if: steps.sr.outputs.new_release_published == 'true'
+        run: |
+          node -e "
+            const fs = require('fs');
+            const f = 'package.json';
+            const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+            j.version = '${{ steps.sr.outputs.new_release_version }}';
+            fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
+          "
+        env:
+          HUSKY: 0
+
       - name: Refresh lockfile after bump
         if: steps.sr.outputs.new_release_published == 'true'
         run: npm install --package-lock-only
         env:
           HUSKY: 0
+
+      # Avoid Husky / git hooks from modifying files during the PR commit
+      - name: Disable git hooks (avoid Husky in PR commit)
+        if: steps.sr.outputs.new_release_published == 'true'
+        run: git config --global core.hooksPath /dev/null
 
       # Sanity: show what changed (useful if PR step no-ops)
       - name: Debug diff
@@ -71,6 +89,8 @@ jobs:
         if: steps.sr.outputs.new_release_published == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v7
+        env:
+          HUSKY: 0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
@@ -90,7 +110,6 @@ jobs:
             chore
             release
 
-      # Enable auto-merge on the sync PR (GitHub will merge once checks pass & branch is up to date)
       - name: Enable auto-merge for sync PR
         if: steps.sr.outputs.new_release_published == 'true' && steps.cpr.outputs.pull-request-operation != 'none'
         uses: peter-evans/enable-pull-request-automerge@v3
