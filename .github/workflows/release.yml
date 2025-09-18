@@ -18,8 +18,7 @@ jobs:
     # Skip runs on any chore commit (incl. the sync commit "chore(release): …")
     if: ${{ !(github.event_name == 'push' && (startsWith(github.event.head_commit.message, 'chore(') || startsWith(github.event.head_commit.message, 'chore:') || startsWith(github.event.head_commit.message, 'chore '))) }}
     runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,9 +40,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          HUSKY: 0 # ensure npm lifecycle hooks don’t run
 
-      # Ensure the workspace has a diff for the sync PR:
-      # persist the released version into package.json
+      # Persist the released version into package.json so the sync PR always has a diff
       - name: Sync package.json version to released version
         if: steps.sr.outputs.new_release_published == 'true'
         run: |
@@ -59,14 +58,11 @@ jobs:
       - name: Refresh lockfile after bump
         if: steps.sr.outputs.new_release_published == 'true'
         run: npm install --package-lock-only
+        env:
+          HUSKY: 0
 
-      # Make sure no untracked temp files (e.g., previous runs) can interfere
-      - name: Clean untracked files
-        if: steps.sr.outputs.new_release_published == 'true'
-        run: git clean -fdx
-
-      # Don’t let hooks (e.g., Husky) mutate files during the PR commit
-      - name: Disable git hooks (avoid Husky in PR commit)
+      # Don’t let git hooks (e.g., Husky pre-commit) mutate files during the PR commit
+      - name: Disable git hooks for the commit
         if: steps.sr.outputs.new_release_published == 'true'
         run: git config --global core.hooksPath /dev/null
 
@@ -77,10 +73,12 @@ jobs:
           git status
           git --no-pager diff --name-only
 
-      - name: Open/Update sync PR (package.json + lockfile + CHANGELOG.md)
+      - name: Open/Update sync PR (commit all changed files)
         if: steps.sr.outputs.new_release_published == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v7
+        env:
+          HUSKY: 0 # ensure hooks don’t run on the git commit
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
@@ -93,10 +91,7 @@ jobs:
             ### Release notes for v${{ steps.sr.outputs.new_release_version }}
 
             ${{ steps.sr.outputs.new_release_notes }}
-          add-paths: |
-            package.json
-            package-lock.json
-            CHANGELOG.md
+          path: .
           committer: GitHub <noreply@github.com>
           author: GitHub Actions <actions@github.com>
           signoff: true
@@ -105,7 +100,6 @@ jobs:
             chore
             release
 
-      # Surface what happened (helps diagnose "silent" runs)
       - name: Show PR step outputs
         if: steps.sr.outputs.new_release_published == 'true'
         run: |
